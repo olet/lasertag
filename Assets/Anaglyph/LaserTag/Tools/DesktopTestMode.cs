@@ -126,3 +126,4 @@ namespace Anaglyph.Lasertag.Tools
         }
     }
 }
+

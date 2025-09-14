@@ -268,3 +268,4 @@ namespace Anaglyph.Lasertag.Environment
         }
     }
 }
+
