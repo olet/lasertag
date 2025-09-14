@@ -70,14 +70,14 @@ namespace Anaglyph.Lasertag.Tools
             
             var ball = BallFactory.SpawnBall(spawnPos, Quaternion.identity);
             
-            // 添加随机初始力
+            // 添加随机初始力 - 🎯 超大力度，飞得超远！
             var rb = ball.GetComponent<Rigidbody>();
             if (rb != null)
             {
                 Vector3 randomForce = new Vector3(
-                    Random.Range(-5f, 5f),
-                    Random.Range(3f, 8f),
-                    Random.Range(-5f, 5f)
+                    Random.Range(-15f, 15f),  // 3倍水平力度
+                    Random.Range(8f, 20f),    // 2倍向上力度
+                    Random.Range(-15f, 15f)   // 3倍前后力度
                 );
                 rb.AddForce(randomForce, ForceMode.VelocityChange);
             }

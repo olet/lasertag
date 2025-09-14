@@ -11,8 +11,8 @@ namespace Anaglyph.Lasertag.Tools
     {
         [Header("简单设置")]
         [SerializeField] private Transform spawnPoint;
-        [SerializeField] private float forwardForce = 5f;
-        [SerializeField] private float upwardForce = 2f;
+        [SerializeField] private float forwardForce = 20f;  // 4倍前进力
+        [SerializeField] private float upwardForce = 8f;   // 4倍向上力
         
         private InputAction spawnAction;
         

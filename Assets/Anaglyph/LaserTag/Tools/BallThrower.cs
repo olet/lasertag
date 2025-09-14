@@ -15,8 +15,8 @@ namespace Anaglyph.Lasertag.Tools
         [Header("投掷设置")]
         [SerializeField] private GameObject ballPrefab;
         [SerializeField] private Transform throwPoint;
-        [SerializeField] private float throwForceMultiplier = 10f;
-        [SerializeField] private float maxThrowForce = 25f;
+        [SerializeField] private float throwForceMultiplier = 30f;  // 3倍力度
+        [SerializeField] private float maxThrowForce = 50f;       // 2倍最大力
         [SerializeField] private int maxBallsPerPlayer = 5;
         
         [Header("预览")]
