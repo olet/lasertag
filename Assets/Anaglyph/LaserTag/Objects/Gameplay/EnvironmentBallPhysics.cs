@@ -70,10 +70,13 @@ namespace Anaglyph.Lasertag.Objects
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             
+            // 🎯 关闭重力，真正钉住！
+            rb.useGravity = false;
+            
             // 标记为已停住
             isStuck = true;
             
-            Debug.Log($"[球碰撞] 撞到 {surfaceName}，停住！");
+            Debug.Log($"[球碰撞] 撞到 {surfaceName}，停住并关闭重力！");
         }
         
         /// <summary>
