@@ -10,59 +10,83 @@ namespace Anaglyph.Lasertag.Tools
     public class SimpleVRBallSpawner : MonoBehaviour
     {
         [Header("简单设置")]
-        [SerializeField] private Transform spawnPoint;
         [SerializeField] private float forwardForce = 20f;  // 4倍前进力
         [SerializeField] private float upwardForce = 8f;   // 4倍向上力
         
-        private InputAction spawnAction;
+        private InputAction rightHandAction;  // A键 = 右手
+        private InputAction leftHandAction;   // X键 = 左手
+        private Transform rightHandTransform;
+        private Transform leftHandTransform;
         
         private void Awake()
         {
-            if (spawnPoint == null)
-                spawnPoint = transform;
+            // 找到左右手
+            var rightHand = GameObject.Find("Right Hand");
+            var leftHand = GameObject.Find("Left Hand");
+            
+            if (rightHand != null) rightHandTransform = rightHand.transform;
+            if (leftHand != null) leftHandTransform = leftHand.transform;
                 
-            // VR控制器X/A键
-            spawnAction = new InputAction("SpawnBall", binding: "<XRController>/primaryButton");
-            spawnAction.performed += OnSpawnPressed;
+            // A键 = 右手发射
+            rightHandAction = new InputAction("RightHandBall", binding: "<XRController>{RightHand}/primaryButton");
+            rightHandAction.performed += OnRightHandPressed;
+            
+            // X键 = 左手发射  
+            leftHandAction = new InputAction("LeftHandBall", binding: "<XRController>{LeftHand}/primaryButton");
+            leftHandAction.performed += OnLeftHandPressed;
         }
         
         private void OnEnable()
         {
-            spawnAction?.Enable();
+            rightHandAction?.Enable();
+            leftHandAction?.Enable();
         }
         
         private void OnDisable()
         {
-            spawnAction?.Disable();
+            rightHandAction?.Disable();
+            leftHandAction?.Disable();
         }
         
         private void OnDestroy()
         {
-            spawnAction?.Dispose();
+            rightHandAction?.Dispose();
+            leftHandAction?.Dispose();
         }
         
-        private void OnSpawnPressed(InputAction.CallbackContext context)
+        private void OnRightHandPressed(InputAction.CallbackContext context)
         {
-            SpawnBall();
+            SpawnBallFromHand(rightHandTransform);
         }
         
-        private void SpawnBall()
+        private void OnLeftHandPressed(InputAction.CallbackContext context)
         {
+            SpawnBallFromHand(leftHandTransform);
+        }
+        
+        private void SpawnBallFromHand(Transform handTransform)
+        {
+            if (handTransform == null)
+            {
+                Debug.LogWarning("[SimpleVRBallSpawner] 手部Transform未找到！");
+                return;
+            }
+            
             // 使用BallFactory生成小球
-            var ball = BallFactory.SpawnBall(spawnPoint.position, spawnPoint.rotation);
+            var ball = BallFactory.SpawnBall(handTransform.position, handTransform.rotation);
             
             // 添加向前的力
             var rb = ball.GetComponent<Rigidbody>();
             if (rb != null)
             {
-                Vector3 force = spawnPoint.forward * forwardForce + Vector3.up * upwardForce;
+                Vector3 force = handTransform.forward * forwardForce + Vector3.up * upwardForce;
                 rb.AddForce(force, ForceMode.VelocityChange);
                 
                 // 添加随机旋转
                 rb.AddTorque(Random.insideUnitSphere * 2f, ForceMode.VelocityChange);
             }
             
-            Debug.Log("[SimpleVRBallSpawner] 生成小球并投掷");
+            Debug.Log($"[SimpleVRBallSpawner] 从{handTransform.name}生成小球并投掷");
         }
     }
 }

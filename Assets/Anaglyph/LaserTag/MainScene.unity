@@ -277,12 +277,13 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1451090185}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dd7b281b168f51f40b38c6c4208915be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Anaglyph.Lasertag::Anaglyph.Lasertag.Tools.KeyboardBallTester
   spawnPoint: {fileID: 369980842}
+  maxBalls: 100
 --- !u!114 &1451090187
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -323,7 +324,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b91eb52cbe8e2a8408a808f1accca577, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Anaglyph.Lasertag::Anaglyph.Lasertag.Tools.SimpleVRBallSpawner
-  spawnPoint: {fileID: 369980842}
+  handController: {fileID: 0}
+  autoFindController: 1
   forwardForce: 5
   upwardForce: 2
 --- !u!1001 &481282207413956510
