@@ -22,12 +22,12 @@ namespace Anaglyph.Lasertag.Objects
             var ballObject = new GameObject("ThrowableBall");
             ballObject.layer = 0; // 🎯 确保在Default Layer，VR摄像头可见
             
-            // 添加物理组件
+            // 添加物理组件 - 🎯 把小球做小，像激光点一样
             var collider = ballObject.AddComponent<SphereCollider>();
-            collider.radius = 0.05f;
+            collider.radius = 0.02f; // 从5cm改为2cm - 更容易碰撞检测
             
             var rigidbody = ballObject.AddComponent<Rigidbody>();
-            rigidbody.mass = 0.2f;
+            rigidbody.mass = 0.05f; // 更轻，反应更快
             
             // 🎯 真正的性能优化：设置物理层级，小球之间不碰撞
             ballObject.layer = LayerMask.NameToLayer("Default"); // 确保在正确层级
@@ -47,8 +47,8 @@ namespace Anaglyph.Lasertag.Objects
             // 🎯 创建VR兼容材质并设置给BallSetup
             var vrMaterial = CreateVRCompatibleMaterial();
             ballSetup.SetBallMaterial(vrMaterial); // 我们需要添加这个方法
-            // 🚨 临时禁用环境物理 - 性能问题
-            // var envPhysics = ballObject.AddComponent<EnvironmentBallPhysics>();
+            // 🎯 重新启用环境物理 - 高性能优化版本
+            var envPhysics = ballObject.AddComponent<EnvironmentBallPhysics>();
             
             // 🎯 修复VR立体渲染：直接在父对象添加MeshRenderer，不用子对象
             var meshFilter = ballObject.AddComponent<MeshFilter>();
