@@ -119,6 +119,11 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!4 &369980842 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1309511879758160730, guid: 273bd9666001ba74c97ca436668c4657, type: 3}
+  m_PrefabInstance: {fileID: 481282207413956510}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1176503942
 GameObject:
   m_ObjectHideFlags: 0
@@ -246,6 +251,81 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 58.103, y: -23.507, z: -60.705}
+--- !u!1 &1451090185
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1451090188}
+  - component: {fileID: 1451090187}
+  - component: {fileID: 1451090186}
+  - component: {fileID: 1451090189}
+  m_Layer: 0
+  m_Name: CodeDrivenManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1451090186
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451090185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd7b281b168f51f40b38c6c4208915be, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Anaglyph.Lasertag::Anaglyph.Lasertag.Tools.KeyboardBallTester
+  spawnPoint: {fileID: 369980842}
+--- !u!114 &1451090187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451090185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cf0402f746ffbc54180083a7ed9e6061, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Anaglyph.Lasertag::Anaglyph.Lasertag.Systems.CodeDrivenSetup
+  useCodeDrivenApproach: 1
+--- !u!4 &1451090188
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451090185}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1451090189
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1451090185}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b91eb52cbe8e2a8408a808f1accca577, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Anaglyph.Lasertag::Anaglyph.Lasertag.Tools.SimpleVRBallSpawner
+  spawnPoint: {fileID: 369980842}
+  forwardForce: 5
+  upwardForce: 2
 --- !u!1001 &481282207413956510
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2223,3 +2303,4 @@ SceneRoots:
   - {fileID: 1176503945}
   - {fileID: 481282207413956510}
   - {fileID: 6587456396836379495}
+  - {fileID: 1451090188}
