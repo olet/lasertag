@@ -18,17 +18,51 @@ namespace Anaglyph.Lasertag.Objects
         private Renderer ballRenderer;
         private bool isStuck = false;
         
+        // 🔍 公共访问方法用于性能统计
+        public bool IsStuckForStats => isStuck;
+        
+        // 🔍 性能调试统计
+        private static int totalBalls = 0;
+        private static int activeBallsThisSecond = 0;
+        private static float lastStatsTime = 0f;
+        
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
             sphereCollider = GetComponent<SphereCollider>();
             ballRenderer = GetComponent<Renderer>();
+            totalBalls++;
+        }
+        
+        private void OnDestroy()
+        {
+            totalBalls--;
         }
 
         private void Update()
         {
             // 一旦停住就不再检测
             if (isStuck) return;
+            
+            // 🔍 统计活跃的球数量
+            activeBallsThisSecond++;
+            
+            // 🔍 每秒输出性能统计 (只在第一个球执行时输出)
+            if (Time.time - lastStatsTime > 1f)
+            {
+                // 计算真正的活跃球数和钉住球数
+                int movingBalls = 0, stuckBalls = 0;
+                var allBalls = FindObjectsOfType<EnvironmentBallPhysics>();
+                foreach (var ball in allBalls)
+                {
+                    if (ball.IsStuckForStats) stuckBalls++;
+                    else movingBalls++;
+                }
+                
+                Debug.Log($"[PERFORMANCE] Total: {totalBalls}, Moving: {movingBalls}, Stuck: {stuckBalls}, Updates/sec: {activeBallsThisSecond}, FPS: {1f/Time.deltaTime:F1}");
+                lastStatsTime = Time.time;
+                activeBallsThisSecond = 0;
+            }
             
             // 🚀 学激光枪：在运动方向发射小射线
             Vector3 velocity = rb.linearVelocity;
@@ -55,6 +89,27 @@ namespace Anaglyph.Lasertag.Objects
                     {
                         Vector3 hitPoint = ray.GetPoint(envHit.distance);
                         StickToSurface(hitPoint, -direction, "Quest环境", direction);
+                        return;
+                    }
+                }
+            }
+            else if (speed < 0.1f && speed > 0.001f) // 🚀 低速球强制钉住
+            {
+                // 球在低速滚动，检测脚下是否有地面
+                if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit groundHit, 0.1f))
+                {
+                    StickToSurface(groundHit.point, groundHit.normal, groundHit.collider.name + "(低速钉住)", Vector3.down);
+                    return;
+                }
+                
+                // 检测Quest环境地面
+                if (EnvironmentMapper.Instance != null)
+                {
+                    Ray downRay = new Ray(transform.position, Vector3.down);
+                    if (EnvironmentMapper.Raycast(downRay, 0.1f, out var groundEnvHit))
+                    {
+                        Vector3 hitPoint = downRay.GetPoint(groundEnvHit.distance);
+                        StickToSurface(hitPoint, Vector3.up, "Quest地面(低速钉住)", Vector3.down);
                         return;
                     }
                 }
@@ -92,6 +147,12 @@ namespace Anaglyph.Lasertag.Objects
             // 🎯 关闭重力，真正钉住！
             rb.useGravity = false;
             
+            // 🚀 CPU性能优化：设为Kinematic，停止物理计算
+            rb.isKinematic = true;
+            
+            // 🔍 测试：确认Kinematic物体是否能被激光检测
+            Debug.Log($"[PHYSICS TEST] Ball now kinematic: {rb.isKinematic}, Collider active: {sphereCollider.enabled}");
+            
             // 🎨 根据表面类型改变颜色
             if (isHorizontalSurface)
             {
@@ -106,6 +167,11 @@ namespace Anaglyph.Lasertag.Objects
             
             // 标记为已停住
             isStuck = true;
+            Debug.Log($"[BALL PHYSICS] Ball stuck! Surface: {surfaceName}, isStuck: {isStuck}");
+            
+            // 🎨 保持小球可见
+            if (ballRenderer != null)
+                ballRenderer.enabled = true;
         }
         
         /// <summary>
@@ -122,7 +188,12 @@ namespace Anaglyph.Lasertag.Objects
         public void ResetStuckState()
         {
             isStuck = false;
-            Debug.Log("[球物理] 重置停住状态，小球可以重新检测碰撞");
+            
+            // 🚀 恢复物理计算
+            rb.isKinematic = false;
+            rb.useGravity = true;
+                
+            Debug.Log("[BALL PHYSICS] Reset stuck state, ball can detect collisions again");
         }
         
         /// <summary>

@@ -40,116 +40,103 @@ namespace Anaglyph.Lasertag.Objects
             }
             
             // 🎯 确保小球可以被激光枪的Physics.Linecast检测到
-            // 小球必须有非Trigger的碰撞体才能被激光弹的射线检测
             var collider = GetComponent<SphereCollider>();
             if (collider != null)
             {
                 collider.isTrigger = false; // 确保不是Trigger，这样激光弹能检测到
-                Debug.Log("[激光交互] 小球碰撞体已设置为非Trigger，可被激光枪检测");
+                Debug.Log($"[BALL] Collider setup: radius={collider.radius}, isTrigger={collider.isTrigger}, layer={gameObject.layer}");
+                Debug.Log($"[BALL] Position: {transform.position}");
             }
+            else
+            {
+                Debug.LogError("[BALL] No SphereCollider found!");
+            }
+            
+            // 🔥 初始状态禁用Update()，节省性能
+            enabled = false;
         }
         
         private void Update()
         {
+            // 🚀 性能优化：只有在颜色动画时才执行
+            if (!isReactivated || colorChangeTimer <= 0f)
+            {
+                enabled = false; // 🔥 禁用组件，停止Update()调用！
+                return;
+            }
+            
             // 🎨 颜色变化动画
-            if (isReactivated && colorChangeTimer > 0f)
-            {
-                colorChangeTimer -= Time.deltaTime;
-                float progress = colorChangeTimer / colorChangeDuration;
-                
-                // 从重新激活颜色渐变回原始颜色
-                Color currentColor = Color.Lerp(originalColor, reactivatedColor, progress);
-                SetBallColor(currentColor);
-                
-                if (colorChangeTimer <= 0f)
-                {
-                    isReactivated = false;
-                    SetBallColor(originalColor);
-                }
-            }
+            colorChangeTimer -= Time.deltaTime;
+            float progress = colorChangeTimer / colorChangeDuration;
             
-            // 🎯 检测附近的激光弹击中
-            if (!isReactivated && ballPhysics.IsGrounded())
-            {
-                CheckForNearbyBulletHits();
-            }
-        }
-        
-        private HashSet<GameObject> processedBullets = new HashSet<GameObject>();
-        
-        /// <summary>
-        /// 🎯 检测附近是否有激光弹
-        /// </summary>
-        private void CheckForNearbyBulletHits()
-        {
-            // 在小球周围搜索激光弹 - 使用很小的范围，只检测真正击中的
-            Collider[] nearbyColliders = Physics.OverlapSphere(transform.position, 0.1f); // 10cm范围
+            // 从重新激活颜色渐变回原始颜色
+            Color currentColor = Color.Lerp(originalColor, reactivatedColor, progress);
+            SetBallColor(currentColor);
             
-            foreach (var collider in nearbyColliders)
+            if (colorChangeTimer <= 0f)
             {
-                // 检查是否是激光弹
-                var bullet = collider.GetComponent<Bullet>();
-                if (bullet != null && !processedBullets.Contains(bullet.gameObject))
-                {
-                    // 🎯 发现新的激光弹在非常近的距离内，说明击中了！
-                    processedBullets.Add(bullet.gameObject);
-                    OnLaserHit(transform.position, bullet.OwnerClientId);
-                    
-                    Debug.Log($"[激光交互] 检测到激光弹击中小球！距离: {Vector3.Distance(transform.position, bullet.transform.position):F3}m");
-                    break; // 只处理第一个击中的激光弹
-                }
+                isReactivated = false;
+                SetBallColor(originalColor);
+                enabled = false; // 🔥 动画结束，禁用组件！
             }
-            
-            // 🧹 清理已经被销毁的激光弹引用
-            processedBullets.RemoveWhere(bullet => bullet == null);
         }
         
         /// <summary>
         /// 🎯 被激光击中时调用
         /// </summary>
-        public void OnLaserHit(Vector3 hitPoint, ulong shooterClientId)
+        public void OnLaserHit(Vector3 hitPoint, ulong shooterClientId, Vector3 laserDirection)
         {
+            Debug.Log($"[BALL] Laser hit detected! Checking if ball can be reactivated...");
+            Debug.Log($"[BALL] IsGrounded: {ballPhysics.IsGrounded()}, isReactivated: {isReactivated}");
+            
             // 🎯 只有在小球已经停住时才能被重新激活
             if (!ballPhysics.IsGrounded())
             {
-                Debug.Log("[激光交互] 小球还在运动中，不响应激光击中");
+                Debug.Log("[BALL] Ball still moving, ignoring laser hit");
                 return;
             }
             
-            // 🚀 恢复重力和物理模拟
-            RestorePhysics();
+            Debug.Log("[BALL] Ball is grounded, proceeding with reactivation...");
+            
+            // 🚀 恢复重力和物理模拟，沿激光反方向弹射
+            RestorePhysics(laserDirection);
             
             // 🎨 视觉和音效反馈
             PlayInteractionFeedback(hitPoint);
             
-            Debug.Log($"[激光交互] 小球被玩家{shooterClientId}的激光击中，重新开始物理模拟！");
+            Debug.Log($"[BALL] Ball hit by player {shooterClientId}, restarting physics!");
         }
         
         /// <summary>
-        /// 🚀 恢复小球的物理特性
+        /// 🚀 恢复小球的物理特性，沿激光反方向弹射
         /// </summary>
-        private void RestorePhysics()
+        private void RestorePhysics(Vector3 laserDirection)
         {
-            // ✅ 恢复重力
+            // ✅ 恢复物理模拟
+            rb.isKinematic = false;
             rb.useGravity = true;
             
             // ✅ 让小球可以再次检测碰撞
-            // 重置EnvironmentBallPhysics的内部状态
             if (ballPhysics != null)
             {
-                // 通过反射或者添加公共方法来重置状态
                 ballPhysics.ResetStuckState();
             }
             
-            // ✅ 给小球一个小的随机冲量，避免直接垂直下落
-            Vector3 randomImpulse = new Vector3(
-                Random.Range(-0.5f, 0.5f),
-                Random.Range(0f, 0.2f),
-                Random.Range(-0.5f, 0.5f)
-            );
-            rb.AddForce(randomImpulse, ForceMode.Impulse);
+            // 🔥 沿着激光反方向弹射 + 随机扰动
+            float sparkForce = Random.Range(0.2f, 0.4f); // 随机弹射力度 - 每次都不同
+            Vector3 baseDirection = -laserDirection; // 正确的激光反方向！
             
-            Debug.Log("[激光交互] 已恢复重力和物理模拟");
+            // 🎲 添加随机扰动，让弹射更自然
+            Vector3 randomOffset = new Vector3(
+                Random.Range(-0.3f, 0.3f),
+                Random.Range(-0.1f, 0.3f), // 稍微偏向上方
+                Random.Range(-0.3f, 0.3f)
+            );
+            
+            Vector3 finalDirection = (baseDirection + randomOffset).normalized;
+            rb.AddForce(finalDirection * sparkForce, ForceMode.Impulse);
+            
+            Debug.Log($"[激光交互] 小球沿激光反方向弹射! 激光方向:{laserDirection:F2}, 弹射方向:{finalDirection:F2}");
         }
         
         /// <summary>
@@ -167,6 +154,9 @@ namespace Anaglyph.Lasertag.Objects
             isReactivated = true;
             colorChangeTimer = colorChangeDuration;
             SetBallColor(reactivatedColor);
+            
+            // 🔥 重新启用组件以执行颜色动画
+            enabled = true;
         }
         
         /// <summary>

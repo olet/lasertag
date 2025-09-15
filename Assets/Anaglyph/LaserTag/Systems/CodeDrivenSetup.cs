@@ -30,6 +30,9 @@ namespace Anaglyph.Lasertag.Systems
         {
             Debug.Log("[CodeDriven] 配置游戏系统...");
             
+            // 🎯 设置多球物理交互系统
+            SetupPhysicalInteractionSystem();
+            
             // 创建球类型配置
             var ballConfigs = new BallConfig[]
             {
@@ -41,6 +44,30 @@ namespace Anaglyph.Lasertag.Systems
             foreach (var config in ballConfigs)
             {
                 Debug.Log($"[CodeDriven] 注册球类型: {config.Type}");
+            }
+        }
+        
+        /// <summary>
+        /// 设置物理交互系统
+        /// </summary>
+        private void SetupPhysicalInteractionSystem()
+        {
+            // 🎯 查找或创建多球标记系统
+            var existingSystem = FindObjectOfType<MultiBallMarkingSystem>();
+            if (existingSystem == null)
+            {
+                // 创建新的管理器对象
+                var markingSystemObject = new GameObject("MultiBallMarkingSystem");
+                var markingSystem = markingSystemObject.AddComponent<MultiBallMarkingSystem>();
+                
+                // 确保管理器不会被意外销毁
+                DontDestroyOnLoad(markingSystemObject);
+                
+                Debug.Log("[CodeDriven] 创建多球物理交互系统");
+            }
+            else
+            {
+                Debug.Log("[CodeDriven] 发现现有的多球物理交互系统");
             }
         }
 

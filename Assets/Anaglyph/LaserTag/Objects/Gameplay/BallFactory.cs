@@ -31,6 +31,7 @@ namespace Anaglyph.Lasertag.Objects
             
             // 🎯 真正的性能优化：设置物理层级，小球之间不碰撞
             ballObject.layer = LayerMask.NameToLayer("Default"); // 确保在正确层级
+            Debug.Log($"[BALL FACTORY] Ball created on layer: {ballObject.layer} (Default)");
             
             // 🚀 性能优化：减少不必要的物理计算
             rigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete; // 离散碰撞检测更快
@@ -52,6 +53,9 @@ namespace Anaglyph.Lasertag.Objects
             
             // 🎯 添加激光枪交互组件 - 代码分离的交互逻辑
             var laserInteraction = ballObject.AddComponent<BallLaserInteraction>();
+            
+            // 🎯 添加物理交互组件 - 真实世界拍打功能
+            var interactableBall = ballObject.AddComponent<InteractableBall>();
             
             // 🎯 修复VR立体渲染：直接在父对象添加MeshRenderer，不用子对象
             var meshFilter = ballObject.AddComponent<MeshFilter>();
