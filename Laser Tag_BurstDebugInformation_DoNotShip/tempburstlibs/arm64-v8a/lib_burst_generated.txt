@@ -10,6 +10,7 @@ Library: H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\li
 --target-framework=NetFramework
 --generate-link-xml=Temp\burst.link.xml
 --temp-folder=H:\AI_dev\lasertag\lasertag\Temp\Burst
+--debug=LineOnly
 --key-folder=G:/unity/editor/6000.2.4f1/Editor/Data/PlaybackEngines/AndroidPlayer
 --decode-folder=H:\AI_dev\lasertag\lasertag\Library\Burst
 --output=H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\lib_burst_generated
@@ -38,6 +39,7 @@ Library: H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\li
 --float-mode=Fast
 --generate-link-xml=Temp\burst.link.xml
 --temp-folder=H:\AI_dev\lasertag\lasertag\Temp\Burst
+--debug=LineOnly
 --key-folder=G:/unity/editor/6000.2.4f1/Editor/Data/PlaybackEngines/AndroidPlayer
 --decode-folder=H:\AI_dev\lasertag\lasertag\Library\Burst
 --output=H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\lib_burst_generated
@@ -56,6 +58,7 @@ Library: H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\li
 --target-framework=NetFramework
 --generate-link-xml=Temp\burst.link.xml
 --temp-folder=H:\AI_dev\lasertag\lasertag\Temp\Burst
+--debug=LineOnly
 --key-folder=G:/unity/editor/6000.2.4f1/Editor/Data/PlaybackEngines/AndroidPlayer
 --decode-folder=H:\AI_dev\lasertag\lasertag\Library\Burst
 --output=H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\lib_burst_generated
@@ -172,6 +175,7 @@ Library: H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\li
 --target-framework=NetFramework
 --generate-link-xml=Temp\burst.link.xml
 --temp-folder=H:\AI_dev\lasertag\lasertag\Temp\Burst
+--debug=LineOnly
 --key-folder=G:/unity/editor/6000.2.4f1/Editor/Data/PlaybackEngines/AndroidPlayer
 --decode-folder=H:\AI_dev\lasertag\lasertag\Library\Burst
 --output=H:\AI_dev\lasertag\lasertag\Temp\BurstOutput\tempburstlibs\arm64-v8a\lib_burst_generated

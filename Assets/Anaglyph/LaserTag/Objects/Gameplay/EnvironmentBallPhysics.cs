@@ -66,8 +66,8 @@ namespace Anaglyph.Lasertag.Objects
         /// </summary>
         private void StickToSurface(Vector3 hitPoint, Vector3 normal, string surfaceName)
         {
-            // 🎨 判断是垂直俯冲还是水平撞击
-            bool isVerticalDrop = IsVerticalDrop(rb.linearVelocity);
+            // 🧠 聪明的几何判断：比较运动碰撞点 vs 垂直下落碰撞点
+            bool isHorizontalSurface = IsHorizontalSurface(hitPoint, transform.position);
             
             // 位置修正到表面
             transform.position = hitPoint + normal * sphereCollider.radius;
@@ -79,16 +79,16 @@ namespace Anaglyph.Lasertag.Objects
             // 🎯 关闭重力，真正钉住！
             rb.useGravity = false;
             
-            // 🎨 根据撞击类型改变颜色
-            if (isVerticalDrop)
+            // 🎨 根据表面类型改变颜色
+            if (isHorizontalSurface)
             {
-                SetBallColor(Color.green);  // 🟢 落地 = 绿色
-                Debug.Log($"[球落地] 垂直俯冲撞到 {surfaceName}，标记为绿色！");
+                SetBallColor(Color.green);  // 🟢 水平表面 = 绿色
+                Debug.Log($"[球落地] 水平表面 {surfaceName}，标记为绿色！");
             }
             else
             {
-                SetBallColor(Color.red);    // 🔴 撞墙 = 红色  
-                Debug.Log($"[球撞墙] 水平撞击 {surfaceName}，标记为红色！");
+                SetBallColor(Color.red);    // 🔴 垂直表面 = 红色  
+                Debug.Log($"[球撞墙] 垂直表面 {surfaceName}，标记为红色！");
             }
             
             // 标记为已停住
@@ -104,19 +104,59 @@ namespace Anaglyph.Lasertag.Objects
         }
         
         /// <summary>
-        /// 🎯 判断是否为垂直俯冲 - 基于速度向量分析
+        /// 🧠 聪明的几何表面判断 - 比较运动碰撞点 vs 垂直下落碰撞点
         /// </summary>
-        private bool IsVerticalDrop(Vector3 velocity)
+        private bool IsHorizontalSurface(Vector3 movementHitPoint, Vector3 ballPosition)
         {
-            // 必须有明显向下的速度
-            if (velocity.y >= -1f) return false;
+            // 🎯 从球位置垂直向下发射射线  
+            Vector3 verticalHitPoint;
+            bool foundVerticalHit = GetVerticalHitPoint(ballPosition, out verticalHitPoint);
             
-            // Y轴速度必须占主导地位 (垂直方向比水平方向更强)
-            float verticalSpeed = Mathf.Abs(velocity.y);
-            float horizontalSpeed = Mathf.Sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+            if (!foundVerticalHit)
+            {
+                // 垂直向下没检测到，可能是悬崖边缘，默认认为是撞墙
+                Debug.Log("[表面判断] 垂直向下无碰撞，默认为垂直表面");
+                return false;
+            }
             
-            // 垂直速度比水平速度大，就认为是俯冲落地
-            return verticalSpeed > horizontalSpeed * 1.5f; // 1.5倍的容错
+            // 🎯 比较两个碰撞点的距离
+            float distance = Vector3.Distance(movementHitPoint, verticalHitPoint);
+            
+            // 🎯 距离判断：近 = 水平表面，远 = 垂直表面
+            bool isHorizontal = distance < 0.2f; // 20cm容错
+            
+            Debug.Log($"[表面判断] 运动点:{movementHitPoint:F2} 垂直点:{verticalHitPoint:F2} 距离:{distance:F2}m → {(isHorizontal ? "水平" : "垂直")}表面");
+            
+            return isHorizontal;
+        }
+        
+        /// <summary>
+        /// 🎯 获取垂直向下的碰撞点
+        /// </summary>
+        private bool GetVerticalHitPoint(Vector3 startPos, out Vector3 hitPoint)
+        {
+            hitPoint = Vector3.zero;
+            
+            // 🎯 垂直向下射线，检测范围10m (足够覆盖房间高度)
+            Ray verticalRay = new Ray(startPos, Vector3.down);
+            float maxDistance = 10f;
+            
+            // 🎯 优先用Physics射线检测游戏物体
+            if (Physics.Raycast(verticalRay, out RaycastHit physicsHit, maxDistance))
+            {
+                hitPoint = physicsHit.point;
+                return true;
+            }
+            
+            // 🎯 再用EnvironmentMapper检测Quest环境
+            if (EnvironmentMapper.Instance != null && 
+                EnvironmentMapper.Raycast(verticalRay, maxDistance, out var envHit))
+            {
+                hitPoint = verticalRay.GetPoint(envHit.distance);
+                return true;
+            }
+            
+            return false;
         }
         
         /// <summary>
