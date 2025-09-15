@@ -119,13 +119,13 @@ namespace Anaglyph.Lasertag.Objects
                 return false;
             }
             
-            // 🎯 比较两个碰撞点的距离
-            float distance = Vector3.Distance(movementHitPoint, verticalHitPoint);
+            // 🎯 比较两个碰撞点的Y轴高度差（忽略水平位置差异）
+            float heightDifference = Mathf.Abs(movementHitPoint.y - verticalHitPoint.y);
             
-            // 🎯 距离判断：近 = 水平表面，远 = 垂直表面
-            bool isHorizontal = distance < 0.2f; // 20cm容错
+            // 🎯 高度判断：高度相近 = 真正的水平表面
+            bool isHorizontal = heightDifference < 0.02f; // 2cm高度差容错
             
-            Debug.Log($"[表面判断] 运动点:{movementHitPoint:F2} 垂直点:{verticalHitPoint:F2} 距离:{distance:F2}m → {(isHorizontal ? "水平" : "垂直")}表面");
+            Debug.Log($"[表面判断] 运动点:{movementHitPoint:F2} 垂直点:{verticalHitPoint:F2} 高度差:{heightDifference:F2}m → {(isHorizontal ? "水平" : "垂直")}表面");
             
             return isHorizontal;
         }
