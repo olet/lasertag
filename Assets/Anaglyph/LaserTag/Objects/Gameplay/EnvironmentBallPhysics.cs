@@ -43,7 +43,7 @@ namespace Anaglyph.Lasertag.Objects
                 // 🎯 方法1：Physics射线检测
                 if (Physics.Raycast(transform.position, direction, out RaycastHit hit, checkDistance))
                 {
-                    StickToSurface(hit.point, hit.normal, hit.collider.name);
+                    StickToSurface(hit.point, hit.normal, hit.collider.name, direction);
                     return;
                 }
                 
@@ -54,7 +54,7 @@ namespace Anaglyph.Lasertag.Objects
                     if (EnvironmentMapper.Raycast(ray, checkDistance, out var envHit))
                     {
                         Vector3 hitPoint = ray.GetPoint(envHit.distance);
-                        StickToSurface(hitPoint, -direction, "Quest环境");
+                        StickToSurface(hitPoint, -direction, "Quest环境", direction);
                         return;
                     }
                 }
@@ -64,13 +64,26 @@ namespace Anaglyph.Lasertag.Objects
         /// <summary>
         /// 🎯 碰到就停住 - 就像激光击中墙壁
         /// </summary>
-        private void StickToSurface(Vector3 hitPoint, Vector3 normal, string surfaceName)
+        private void StickToSurface(Vector3 hitPoint, Vector3 normal, string surfaceName, Vector3 flyDirection)
         {
             // 🧠 聪明的几何判断：比较运动碰撞点 vs 垂直下落碰撞点
             bool isHorizontalSurface = IsHorizontalSurface(hitPoint, transform.position);
             
-            // 位置修正到表面
-            transform.position = hitPoint + normal * sphereCollider.radius;
+            // 🎯 位置处理：区分Physics vs Quest环境
+            Vector3 finalPosition = hitPoint;
+            
+            // ✅ Physics碰撞：游戏世界，无需补偿
+            // ❌ Quest环境碰撞：TSDF有偏移，需要补偿
+            if (surfaceName == "Quest环境")
+            {
+                // 🔧 TSDF补偿：沿真正的飞行方向继续推进，穿透到真实表面
+                finalPosition = hitPoint + flyDirection * 0.03f; // 3cm沿飞行方向继续推进
+                
+                Debug.Log($"[TSDF补偿] 沿飞行方向{flyDirection:F2}推进3cm到{finalPosition:F2}");
+            }
+            
+            transform.position = finalPosition;
+            transform.up = normal;          // 法向量对齐 (TODO: 后续反弹功能可能需要修正)
             
             // 完全停止
             rb.linearVelocity = Vector3.zero;
@@ -101,6 +114,15 @@ namespace Anaglyph.Lasertag.Objects
         public bool IsGrounded()
         {
             return isStuck;
+        }
+        
+        /// <summary>
+        /// 🚀 重置停住状态 - 供激光交互使用
+        /// </summary>
+        public void ResetStuckState()
+        {
+            isStuck = false;
+            Debug.Log("[球物理] 重置停住状态，小球可以重新检测碰撞");
         }
         
         /// <summary>

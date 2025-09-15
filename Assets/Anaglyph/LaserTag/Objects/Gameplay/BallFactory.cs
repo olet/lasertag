@@ -50,6 +50,9 @@ namespace Anaglyph.Lasertag.Objects
             // 🎯 重新启用环境物理 - 高性能优化版本
             var envPhysics = ballObject.AddComponent<EnvironmentBallPhysics>();
             
+            // 🎯 添加激光枪交互组件 - 代码分离的交互逻辑
+            var laserInteraction = ballObject.AddComponent<BallLaserInteraction>();
+            
             // 🎯 修复VR立体渲染：直接在父对象添加MeshRenderer，不用子对象
             var meshFilter = ballObject.AddComponent<MeshFilter>();
             var meshRenderer = ballObject.AddComponent<MeshRenderer>();
