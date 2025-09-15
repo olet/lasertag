@@ -18,12 +18,12 @@ namespace Anaglyph.Lasertag.Objects
         [SerializeField] private float markingTime = 0f;
         
         [Header("检测设置")]
-        [SerializeField] private float detectionRadius = 0.2f;      // 20cm检测半径（合理拍打范围）
-        [SerializeField] private float checkInterval = 0.05f;       // 每0.05秒检测一次（更快响应）
+        [SerializeField] private float detectionRadius = 0.8f;      // 80cm检测半径（扩大拍打范围）
+        [SerializeField] private float checkInterval = 0.20f;       // 每0.25秒检测一次（确保TSDF数据更新）
         
         [Header("反弹力设置")]
-        [SerializeField] private float hitForceMin = 1.5f;          // 最小反弹力
-        [SerializeField] private float hitForceMax = 3f;            // 最大反弹力
+        [SerializeField] private float hitForceMin = 0.5f;          // 最小反弹力
+        [SerializeField] private float hitForceMax = 1.5f;            // 最大反弹力
         
         // 组件引用
         private PhysicalInteractionDetector detector;

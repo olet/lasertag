@@ -30,8 +30,10 @@ namespace Anaglyph.Lasertag.Objects
         
         // 🎯 距离对比检测数据
         private Dictionary<Vector3, float> lastDetectionDistances = new Dictionary<Vector3, float>();
-        private const float DISTANCE_REDUCTION_THRESHOLD = 0.005f; // 距离缩短0.5cm才算拍打
-        private const float FINAL_DISTANCE_THRESHOLD = 0.02f;      // 最终检测距离必须<2cm
+        private Dictionary<Vector3, int> validHitCounts = new Dictionary<Vector3, int>(); // 连续有效检测计数
+        private const float DISTANCE_REDUCTION_THRESHOLD = 0.10f;  // 距离缩短5cm才算拍打（严格过滤TSDF噪声）
+        private const float FINAL_DISTANCE_THRESHOLD = 0.8f;       // 最终距离限制80cm（与检测范围一致）
+        private const int REQUIRED_VALID_HITS = 1;                 // 需要连续2次有效检测才触发
         
         // 高级检测数据（预留用于未来功能）
         private struct AdvancedDetectionData
@@ -68,7 +70,7 @@ namespace Anaglyph.Lasertag.Objects
                 isDetecting = true;
                 InvokeRepeating(nameof(CheckPhysicalContact), 0f, ballComponent.CheckInterval);
                 
-                Debug.Log($"[PhysicalDetector] 🎯 {name} 开始物理接触检测，间隔:{ballComponent.CheckInterval}s，半径:{ballComponent.DetectionRadius}m，距离变化阈值:{DISTANCE_REDUCTION_THRESHOLD}m，最终距离阈值:{FINAL_DISTANCE_THRESHOLD}m");
+                Debug.Log($"[PhysicalDetector] 🎯 {name} 开始超严格拍打检测，间隔:{ballComponent.CheckInterval}s，半径:{ballComponent.DetectionRadius}m，距离缩短阈值:{DISTANCE_REDUCTION_THRESHOLD}m，需要连续{REQUIRED_VALID_HITS}次");
             }
         }
         
@@ -82,8 +84,9 @@ namespace Anaglyph.Lasertag.Objects
                 isDetecting = false;
                 CancelInvoke(nameof(CheckPhysicalContact));
                 
-                // 🧹 清理距离记录
+                // 🧹 清理距离记录和计数器
                 lastDetectionDistances.Clear();
+                validHitCounts.Clear();
                 
                 Debug.Log($"[PhysicalDetector] {name} 停止物理接触检测");
             }
@@ -102,17 +105,10 @@ namespace Anaglyph.Lasertag.Objects
             
             Vector3 ballPosition = transform.position;
             float detectionRadius = ballComponent.DetectionRadius;
-            Vector3 stuckDirection = ballComponent.StuckDirection;
             
-            // 🎯 检测每个方向（排除钉住方向）
+            // 🎯 检测6个方向（不排除任何方向，只靠距离判断）
             foreach (Vector3 direction in directions)
             {
-                // 🚫 排除钉住方向的检测
-                if (Vector3.Dot(direction, stuckDirection) > 0.8f) // 相似度>0.8跳过
-                {
-                    continue;
-                }
-                
                 // 🔍 距离对比检测
                 bool shouldTriggerHit = CheckDirectionalContactWithDistanceComparison(ballPosition, direction, detectionRadius);
                 
@@ -126,7 +122,7 @@ namespace Anaglyph.Lasertag.Objects
         }
         
         /// <summary>
-        /// 🎯 带距离对比的方向检测（两次检测距离缩短才算拍打）
+        /// 🎯 简化的距离对比检测（两次检测距离缩短就算拍打）
         /// </summary>
         bool CheckDirectionalContactWithDistanceComparison(Vector3 ballPosition, Vector3 direction, float maxDistance)
         {
@@ -146,29 +142,62 @@ namespace Anaglyph.Lasertag.Objects
                 hasContact = true;
             }
             
-            // 📊 距离对比逻辑
-            if (lastDetectionDistances.ContainsKey(direction))
+            // 📊 严格的距离对比逻辑（只对比连续检测到的情况）
+            if (hasContact && lastDetectionDistances.ContainsKey(direction))
             {
                 float lastDistance = lastDetectionDistances[direction];
-                float distanceReduction = lastDistance - currentDistance;
                 
-                // 🎯 距离明显缩短 + 最终距离够近 = 拍打！
-                if (hasContact && distanceReduction > DISTANCE_REDUCTION_THRESHOLD && currentDistance <= FINAL_DISTANCE_THRESHOLD)
+                // 🚫 只有上次也检测到才对比（避免从maxDistance的误判）
+                if (lastDistance < maxDistance * 0.9f) // 上次是真实检测值
                 {
-                    Debug.Log($"[DistanceCheck] 🎯 {direction}方向拍打检测: 距离缩短{distanceReduction:F3}m ({lastDistance:F3}→{currentDistance:F3}), 最终距离{currentDistance:F3}m");
-                    lastDetectionDistances[direction] = currentDistance;
-                    return true;
+                    float distanceReduction = lastDistance - currentDistance;
+                    
+                    // 🎯 严格判断：距离明显缩短 + 在检测范围内 + 最终距离合理（避免远距离噪声）
+                    if (distanceReduction > DISTANCE_REDUCTION_THRESHOLD && 
+                        currentDistance <= FINAL_DISTANCE_THRESHOLD && 
+                        currentDistance >= 0.10f && // 最终距离至少5cm（避免太近的噪声）
+                        currentDistance <= 0.8f)   // 最终距离最多60cm（真实拍打距离）
+                    {
+                        // 增加有效检测计数
+                        int hitCount = validHitCounts.ContainsKey(direction) ? validHitCounts[direction] : 0;
+                        hitCount++;
+                        validHitCounts[direction] = hitCount;
+                        
+                        Debug.Log($"[ValidHit] {direction}方向有效检测{hitCount}/{REQUIRED_VALID_HITS}: 距离缩短{distanceReduction:F3}m ({lastDistance:F3}→{currentDistance:F3})");
+                        
+                        // 只有连续多次有效检测才触发
+                        if (hitCount >= REQUIRED_VALID_HITS)
+                        {
+                            Debug.Log($"[ConfirmedHit] 🎯 {direction}方向确认拍打! 连续{hitCount}次有效检测");
+                            validHitCounts[direction] = 0; // 重置计数
+                            lastDetectionDistances[direction] = currentDistance;
+                            return true;
+                        }
+                    }
+                    else
+                    {
+                        // 条件不满足，重置计数
+                        validHitCounts[direction] = 0;
+                    }
                 }
             }
             
-            // 📝 更新距离记录
+            // 📝 更新距离记录（只在有真实检测时）
             if (hasContact)
             {
                 lastDetectionDistances[direction] = currentDistance;
             }
             else
             {
-                lastDetectionDistances[direction] = maxDistance; // 没有检测到设为最大距离
+                // 🚫 没检测到时清除记录和计数器，避免从maxDistance误判
+                if (lastDetectionDistances.ContainsKey(direction))
+                {
+                    lastDetectionDistances.Remove(direction);
+                }
+                if (validHitCounts.ContainsKey(direction))
+                {
+                    validHitCounts.Remove(direction);
+                }
             }
             
             return false;
