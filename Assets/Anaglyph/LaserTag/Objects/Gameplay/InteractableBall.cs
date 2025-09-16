@@ -18,7 +18,7 @@ namespace Anaglyph.Lasertag.Objects
         [SerializeField] private float markingTime = 0f;
         
         [Header("检测设置")]
-        [SerializeField] private float detectionRadius = 0.8f;      // 80cm检测半径（扩大拍打范围）
+        [SerializeField] private float detectionRadius = 0.2f;      // 20cm检测半径（精确拍打范围）
         [SerializeField] private float checkInterval = 0.20f;       // 每0.25秒检测一次（确保TSDF数据更新）
         
         [Header("反弹力设置")]
@@ -193,7 +193,7 @@ namespace Anaglyph.Lasertag.Objects
         }
         
         /// <summary>
-        /// 自动管理：钉住时自动标记，移动时自动取消标记
+        /// 🚫 自动管理已禁用：不再自动标记钉住的球
         /// </summary>
         void Update()
         {
@@ -206,6 +206,8 @@ namespace Anaglyph.Lasertag.Objects
                 Debug.Log($"[InteractableBall] 球 {name} 状态检查: ballPhysics={ballPhysics != null}, isGrounded={isGrounded}, canBeMarked={canBeMarked}, isMarked={isMarkedForInteraction}");
             }
             
+            // 🚫 自动标记功能已禁用
+            /* 
             // 🎯 测试模式：自动标记所有钉住的球
             if (canBeMarked && !isMarkedForInteraction)
             {
@@ -221,6 +223,7 @@ namespace Anaglyph.Lasertag.Objects
                 // 球开始移动，取消标记
                 UnmarkInteraction();
             }
+            */
         }
         
         /// <summary>
